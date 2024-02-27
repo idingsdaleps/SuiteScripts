@@ -39,11 +39,13 @@ function (search, runtime, https, record, file, currentRecord, moment) {
                 tempObj["addr1"] = result.getValue("billaddress1");
                 tempObj["addr2"] = result.getValue("billaddress2");
                 tempObj["addr3"] = result.getValue("billaddress3");
+                tempObj["city"] = result.getValue("billcity");
                 tempObj["county"] = result.getValue("billstate");
                 tempObj["postcode"] = result.getValue("billzipcode");
                 tempObj["country"] = result.getText("billcountry");
                 tempObj["custID"] = result.getValue("internalid");
                 returnArray.push(tempObj);
+              log.debug("SEARCH RESPONSE", result)
                 return true;
                     });
 
@@ -70,7 +72,7 @@ function (search, runtime, https, record, file, currentRecord, moment) {
             var lastName = requestObj.lastName;
             var addr1 = requestObj.addr1;
             var addr2 = requestObj.addr2;
-            var addr3 = requestObj.addr3;
+            var addr3 = requestObj.city;
             var county = requestObj.county;
             var postcode = requestObj.postcode;
             var country = requestObj.country;
