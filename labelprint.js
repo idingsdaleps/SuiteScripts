@@ -8,8 +8,8 @@
 // PSBooks Catalogue requests processor. Saved search to locate customer details with catalogue requested box ticked, this script generates postage labels, adds campaign response and unticks the request box
 // Label generation is done by sending API request to Formstack which returns PDF content in response based on configured template. This content is then sent to PrintNode 
 
-define(['N/search', 'N/runtime', 'N/https','N/record','N/file','N/currentRecord','./moment.js'],
-function (search, runtime, https, record, file, currentRecord, moment) {
+define(['N/search', 'N/runtime', 'N/https','N/record','N/file','N/currentRecord','./moment.js','N/render'],
+function (search, runtime, https, record, file, currentRecord, moment, render) {
 
     var scriptObj = runtime.getCurrentScript();
     const SAVED_SEARCH_ID = scriptObj.getParameter('custscript_formstack_search'); 
@@ -57,6 +57,7 @@ function (search, runtime, https, record, file, currentRecord, moment) {
     }
 
 
+
 //Process each request
 
     function map(context) {
@@ -96,27 +97,51 @@ function (search, runtime, https, record, file, currentRecord, moment) {
             log.audit ("MAP Media Code", "Using media code ID " + defaultMediaCodeId + " and event ID " + defaultEvent)
 
             //build parameters for Formstack call
-            var parameters = 'title='+title+'&firstName='+firstName+'&lastName='+lastName+'&addr1='+addr1+'&addr2='+addr2+'&addr3='+addr3+'&county='+county+'&postcode='+postcode+'&country='+country;
 
             log.audit("MAP Processing", "Creating payload for customer " + custID + "-" + firstName + " " + lastName);
-            log.debug("MAP parameters", parameters);
 
+            const _printAddressLabel = (addressDetails) => {
+            let xml = '<?xml version="1.0"?>\n<!DOCTYPE pdf PUBLIC "-//big.faceless.org//report" "report-1.1.dtd">\n';
+            xml += `<pdf><body size="A8-landscape" style="padding: 0"><table cellpadding="1" cellspacing="1">`;
+            xml += `<tr><td>${addressDetails.addressee}</td></tr>`
+            xml += `<tr><td>${addressDetails.address1}</td></tr>`
+            if(addressDetails.address2){
+                xml += `<tr><td>${addressDetails.address2}</td></tr>`
+            }
+            if(addressDetails.address3){
+                xml += `<tr><td>${addressDetails.address3}</td></tr>`
+            }
+            xml += `<tr><td>${addressDetails.city}</td></tr>`
+            xml += `<tr><td>${addressDetails.zip}</td></tr>`
+            if(addressDetails.state){
+                xml += `<tr><td>${addressDetails.state}</td></tr>`
+            }
+            
+            xml += `<tr><td>${addressDetails.country}</td></tr>`
+            
+            xml += "</table></body></pdf>";
+            return render.xmlToPdf({xmlString: xml});
+            }
 
-            //build and send call to Formstack
-                var headerObj = {
-                    "content-type" : "application/x-www-form-urlencoded"
-                };
-                var formstackResponse = https.post({
-                    url: FORMSTACK_URL,
-                    headers: headerObj,
-                    body: parameters
-                });
+            const billingAddress = {
+            addresse: title + ' ' + firstName + ' ' + lastName,
+            address1: addr1,
+            address2: addr2,
+            address3: '',
+            city: addr3,
+            zip: postcode,
+            state: county,
+            country: country,
+            }
 
-            //store response in variable
+            const _generatePdf = (billingAddress) => {
+            //the below will create File object
+            const pdfResult = _printAddressLabel(billingAddress);
+            //the below returns that File object Base64 encoded string (PDF)
+            return pdfResult.getContents();
+        }
 
-                var labelBase64 = formstackResponse.body;
-
-                log.audit("MAP Formstack Response",formstackResponse.code);
+        
 
 
             //build and send call containing PDF to PrintNode
@@ -125,7 +150,7 @@ function (search, runtime, https, record, file, currentRecord, moment) {
                         "printerId" : PRINTNODE_PRINTER,
                         "title" : "Address label print",
                         "contentType" : "pdf_base64",
-                        "content" : labelBase64,
+                        "content" : _generatePdf,
                         "options": {"paper":"11354 Multi-Purpose","rotate":"0"},
                         "source" : "Netsuite catalogue request processing script",
                 };
@@ -145,7 +170,7 @@ function (search, runtime, https, record, file, currentRecord, moment) {
 
                 });
 
-                log.audit("MAP PrintNode Response",printnodeResponse.code);
+                log.audit("MAP PrintNode Response",printnodeResponse);
 
                 //if label prints OK, clear request flag and create campaign response
 
