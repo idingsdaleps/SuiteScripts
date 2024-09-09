@@ -5,6 +5,9 @@
 define(['N/record','N/runtime','N/task','./moment.js', 'N/https'], function(record, runtime,task, moment, https) {
 function onAction(scriptContext){
 
+
+//Set variables based on script parameters
+
 var myScript = runtime.getCurrentScript();
 const CUSTOMER_EMAIL = myScript.getParameter('custscript_ticket_email');
 const CUSTOMER_ID = myScript.getParameter('custscript_ticket_custid'); 
@@ -15,12 +18,10 @@ const ZENDESK_URL = myScript.getParameter('custscript_ticket_zdURL');
 const ZENDESK_KEY = myScript.getParameter('custscript_ticket_zdKey'); 
 
 try {
-
-                var zendeskHeaderObj = {
+               var zendeskHeaderObj = {
                     "content-type": "application/json",
                     "Authorization" : "Basic " + ZENDESK_KEY
                 };     
-
 
                log.audit("Search by ID", "Looking for ID " + CUSTOMER_ID)
                var searchByIdCountBody = https.get({
@@ -41,14 +42,12 @@ try {
                     });
 
                     log.debug("ID Search", searchByIdBody.body)
-
                     var zendeskUserId= JSON.parse(searchByIdBody.body).users[0].id
                     log.audit ("Search by ID success", "Creating ticket using ID " + zendeskUserId)
 
                     } else
 
                         {
-
                         if (!CUSTOMER_EMAIL){
 
                         log.audit("No email", "No email address, creating customer using ID only")
@@ -59,19 +58,17 @@ try {
                         body: JSON.stringify(user_json)
                         });
                         log.debug("User Create Response", createUserResponse.body)
-                        if (createUserResponse.code==201){
-                        var zendeskUserId = JSON.parse(createUserResponse.body).user.id
-                        log.audit("User Created", "User ID " + zendeskUserId+ " Created")
-                        } 
+                            if (createUserResponse.code==201){
+                            var zendeskUserId = JSON.parse(createUserResponse.body).user.id
+                            log.audit("User Created", "User ID " + zendeskUserId+ " Created")
+                            } 
                             else{
                             log.audit("User Creation Failed", createUserResponse)
                             log.audit("User JSON", user_json)
                             }
-
                         }
 
                         else{
-
                         log.audit ("Search by ID failed", "No results from ID search, looking for email " + CUSTOMER_EMAIL)
                         var searchByEmailCountBody = https.get({
                         url: ZENDESK_URL + "api/v2/search/count?query=type:user " + CUSTOMER_EMAIL,
@@ -81,16 +78,14 @@ try {
                         log.audit("Search by email",  "Email search returned " + searchByEmailCount + " results")
                         log.debug("Email Count Search", searchByEmailCount.body)
 
-                        if(searchByEmailCount>0){
-
-                        var searchByEmailBody = https.get({
-                        url: ZENDESK_URL + "api/v2/users/search?query=" + CUSTOMER_EMAIL,
-                        headers: zendeskHeaderObj,
-                        });
-
-                        var zendeskUserId= JSON.parse(searchByEmailBody.body).users[0].id
-                        log.audit("Search by email success", "Creating ticket using ID " + zendeskUserId)
-                        log.debug("Email Search", searchByEmailBody.body)
+                            if(searchByEmailCount>0){
+                            var searchByEmailBody = https.get({
+                            url: ZENDESK_URL + "api/v2/users/search?query=" + CUSTOMER_EMAIL,
+                            headers: zendeskHeaderObj,
+                            });
+                            var zendeskUserId= JSON.parse(searchByEmailBody.body).users[0].id
+                            log.audit("Search by email success", "Creating ticket using ID " + zendeskUserId)
+                            log.debug("Email Search", searchByEmailBody.body)
 
                             } 
                             else {
@@ -102,10 +97,10 @@ try {
                             body: JSON.stringify(user_json)
                             });
                             log.debug("User Creation", createUserResponse.body)
-                            if (createUserResponse.code==201){
-                            var zendeskUserId = JSON.parse(createUserResponse.body).user.id
-                            log.audit("User Created", "User ID " + createdUserId + " Created")
-                            } 
+                                if (createUserResponse.code==201){
+                                var zendeskUserId = JSON.parse(createUserResponse.body).user.id
+                                log.audit("User Created", "User ID " + createdUserId + " Created")
+                                } 
                                 else{
                                 log.audit("User Creation Failed", createUserResponse)
                                 log.audit("User JSON", user_json)
@@ -122,19 +117,15 @@ try {
             body: JSON.stringify(ticket_json)
             });
             log.debug("Ticket Creation", createTicketResponse.body)
-            if (createTicketResponse.code==201){
-            var createdTicketId = JSON.parse(createTicketResponse.body).ticket.id
-            log.audit("Ticket Created", "Ticket ID " + createdTicketId + " Created")
-            return createdTicketId
-            } 
-            else{
-            log.audit("Ticket Creation Failed", createTicketResponse)
-            log.audit("Ticket JSON", ticket_json)
-            }
-
-
-
-
+                if (createTicketResponse.code==201){
+                var createdTicketId = JSON.parse(createTicketResponse.body).ticket.id
+                log.audit("Ticket Created", "Ticket ID " + createdTicketId + " Created")
+                return createdTicketId
+                } 
+                else{
+                log.audit("Ticket Creation Failed", createTicketResponse)
+                log.audit("Ticket JSON", ticket_json)
+                }
  }
      
         catch (e) {
