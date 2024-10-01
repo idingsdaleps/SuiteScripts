@@ -27,18 +27,18 @@ case 'NEW':
     SENDGRID_TEMPLATE = 'd-20b76004f4e84c53a348d982b04608b2';
     break;
 case 'REACTIVATION':    
-    SENDGRID_TEMPLATE = 'd-20b76004f4e84c53a348d982b04608b2';
+    SENDGRID_TEMPLATE = 'd-23d59a588bd1496aab7467dd006abcef';
     break;
 case 'DUPLICATE':    
-    SENDGRID_TEMPLATE = 'd-20b76004f4e84c53a348d982b04608b2';
+    SENDGRID_TEMPLATE = 'd-4702899d62134a2fb1d70c35094d8981';
     break;
 case 'DUPLICATE_EARLY':    
-    SENDGRID_TEMPLATE = 'd-20b76004f4e84c53a348d982b04608b2';
+    SENDGRID_TEMPLATE = 'd-1785b7f3a5784f00828c03c1bc1c1890';
     break;
 }
 
         try {
-             var request_body = {"from":{"email":"help@psbooks.co.uk"},"personalizations":[{"to":[{"email":CUSTOMER_EMAIL}],"dynamic_template_data":{"customer_name":email_customer_name,"refund_amount":parseFloat(REFUND_AMOUNT).toFixed(2)}}],"template_id":SENDGRID_TEMPLATE, "mail_settings": {"sandbox_mode": {"enable": false}}, "asm": {"group_id": 151077}};
+             var request_body = {"from":{"email":"help@psbooks.co.uk"},"personalizations":[{"to":[{"email":CUSTOMER_EMAIL}],"dynamic_template_data":{"customer_name":email_customer_name}}],"template_id":SENDGRID_TEMPLATE, "mail_settings": {"sandbox_mode": {"enable": false}}, "asm": {"group_id": 151077}};
     
 
                 log.debug("Sendgrid Body",request_body);

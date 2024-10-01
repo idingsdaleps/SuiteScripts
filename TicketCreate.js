@@ -12,10 +12,11 @@ var myScript = runtime.getCurrentScript();
 const CUSTOMER_EMAIL = myScript.getParameter('custscript_ticket_email');
 const CUSTOMER_ID = myScript.getParameter('custscript_ticket_custid'); 
 const CUSTOMER_NAME = myScript.getParameter('custscript_ticket_custname'); 
-const TICKET_BODY = myScript.getParameter('custscript_ticket_body'); 
+var TICKET_BODY = myScript.getParameter('custscript_ticket_body'); 
 const TICKET_SUBJECT = myScript.getParameter('custscript_ticket_subject'); 
 const ZENDESK_URL = myScript.getParameter('custscript_ticket_zdURL'); 
 const ZENDESK_KEY = myScript.getParameter('custscript_ticket_zdKey'); 
+const ORDER_ID = myScript.getParameter('custscript_ticket_orderID'); 
 
 try {
                var zendeskHeaderObj = {
@@ -35,7 +36,7 @@ try {
                 var searchByIdCount = JSON.parse(searchByIdCountBody.body).count
                 log.audit("Search by ID",  "ID search returned " + searchByIdCount + " results")
 
-                    if(searchByIdCount>0){
+                    if((searchByIdCount>0)&&(CUSTOMER_ID!=9999)){
                         var searchByIdBody = https.get({
                         url: ZENDESK_URL + "api/v2/users/search?query=ns_externalid:" + CUSTOMER_ID,
                         headers: zendeskHeaderObj,
@@ -76,7 +77,7 @@ try {
                         });
                         var searchByEmailCount = JSON.parse(searchByEmailCountBody.body).count
                         log.audit("Search by email",  "Email search returned " + searchByEmailCount + " results")
-                        log.debug("Email Count Search", searchByEmailCount.body)
+                        log.debug("Email Count Search", searchByEmailCountBody.body)
 
                             if(searchByEmailCount>0){
                             var searchByEmailBody = https.get({
@@ -97,9 +98,9 @@ try {
                             body: JSON.stringify(user_json)
                             });
                             log.debug("User Creation", createUserResponse.body)
-                                if (createUserResponse.code==201){
+                                if ((createUserResponse.code==201)||(createUserResponse.code==200)){
                                 var zendeskUserId = JSON.parse(createUserResponse.body).user.id
-                                log.audit("User Created", "User ID " + createdUserId + " Created")
+                                log.audit("User Created", "User ID " + zendeskUserId + " Created")
                                 } 
                                 else{
                                 log.audit("User Creation Failed", createUserResponse)
@@ -108,6 +109,13 @@ try {
                             }
 
                          }}
+
+            if(ORDER_ID){
+                
+                TICKET_BODY = "Ticket created from order https://4480225-sb1.app.netsuite.com/app/accounting/transactions/salesord.nl?id=" + ORDER_ID + "\r\n" + TICKET_BODY
+                log.audit("Order ID populated", TICKET_BODY)
+
+            }             
 
 
             var ticket_json = {"ticket":{"subject": TICKET_SUBJECT,"comment": {"body": TICKET_BODY, "public": false},"requester_id":zendeskUserId}}

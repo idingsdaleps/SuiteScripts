@@ -120,7 +120,9 @@ function (search, runtime, https, record, file, currentRecord, moment, render) {
             xml += `<tr><td>${addressDetails.country}</td></tr>`
             
             xml += "</table></body></pdf>";
-            return render.xmlToPdf({xmlString: xml});
+
+
+
             }
 
             const billingAddress = {
