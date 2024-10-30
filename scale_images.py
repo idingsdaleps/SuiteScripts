@@ -6,10 +6,10 @@ import glob
 import time
 import os
 
-CONSUMER_KEY = "1a59b62b92a00cba2c0f864c499f4b1a296fd7297bb0f7cf617c8e5cdb673503"
-CONSUMER_SECRET = "3daf2c9e1222b840ccc51c126b91ac56a5273eb3ca97752ed0d7978568620e00"
-TOKEN_ID = "1b6a7fdc4a77df2d33fc0ceea22ffb045ec8e69e7e6423e569abd216c3415dfe"
-TOKEN_SECRET = "64f1bf1614bd8d410889e1b3827cae618f375feae56cfa7efb2c0a658d94f1ad"
+CONSUMER_KEY = ""
+CONSUMER_SECRET = ""
+TOKEN_ID = ""
+TOKEN_SECRET = ""
 REALM = "4480225"
 RESTLET_URL = "https://4480225.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=2993&deploy=1&sku="
 SCALE_FACTOR = 1.249
