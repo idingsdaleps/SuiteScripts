@@ -10,8 +10,7 @@ function onAction(scriptContext){
 
 var myScript = runtime.getCurrentScript();
 const ORDER_ID = myScript.getParameter('custscript_ammend_orderid');
-const ADYEN_KEY = 'AQE4hmfxLYnLYxJCw0m/n3Q5qf3VeIReGYBJSmxG0lqkkW1Yss57GdJkAo4WohkUBh4jXEeV4A0lKA8QwV1bDb7kfNy1WIxIIkxgBw==-dc3zj2pwCt+iV9IVVQnTl45v8PjGLf29LwT2T2ga1E0=-i1ieRNFb3sp>krPI,3d'
-//const ADYEN_KEY = myScript.getParameter('custscript_ammend_adyenkey');
+const ADYEN_KEY = myScript.getParameter('custscript_ammend_adyenkey');
 const ADYEN_MERCHANT = 'PostscriptBooksLimitedMOTO'
 //const ADYEN_MERCHANT = myScript.getParameter('custscript_ammend_adyenmarchant');
 const ADYEN_URL = 'https://pal-test.adyen.com/pal/servlet/Payment/v68/cancel'
