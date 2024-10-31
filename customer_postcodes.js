@@ -72,35 +72,25 @@ try{
 
             log.audit("Processing", "Customer ID " + custID + " with postcodes " + shipPostcode + " " + billingPostcode)
 
-            var current_customer = record.load({
-            type: record.Type.CUSTOMER,
-            id : custID,
-            isDynamic: false
-            });
-
-            current_customer.setValue({
-            fieldId: 'custentity_ps_default_billing_postcode',
-            value: billingPostcode
-            });
-
-            current_customer.setValue({
-            fieldId: 'custentity_ps_default_shipping_postcode',
-            value: shipPostcode
-            });
-
-
             try {
-                var recId = current_customer.save();
-                log.debug({
-                    title: 'Customer successfully saved',
-                    details: 'Id: ' + recId
-                });
+
+                record.submitFields({
+                    type: record.Type.CUSTOMER,
+                    id: custID,
+                    values: {
+                        'custentity_ps_default_billing_postcode': billingPostcode,
+                        'custentity_ps_default_shipping_postcode': shipPostcode
+                    }
+
+                })
+
             } catch (e) {
                 log.error({
                     title: e.name,
                     details: e.message      
                 });
              }
+
 
         
 }
@@ -112,7 +102,7 @@ try{
     }
 
     function summarize(context) {
-        log.debug("SUMMARIZE", "**SCRIPT END**");
+        log.audit("SUMMARIZE", "**SCRIPT END**");
     }
 
     return {
