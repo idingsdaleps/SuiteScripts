@@ -62,44 +62,52 @@ try {
     });
 
     replacementOrderRecord.setValue({
-    fieldId: 'customlist_nbs_onholdreason',
+    fieldId: 'custbody_nbs_onholdreason',
     value: 35
     });
 
+   var mwpLine
+    do{
+    var mwpLine = replacementOrderRecord.findSublistLineWithValue({
+    sublistId: 'item',
+    fieldId: 'item',
+    value: 27062})
+
+        if (mwpLine==-1){
+            log.audit("No MWP lines remaining")
+        }
+        else {
+
+            log.audit("MWP found on line " + mwpLine + ", removing")
+            replacementOrderRecord.removeLine({
+                sublistId: 'item',
+                line: mwpLine,
+                ignoreRecalc: true
+            })
+        }
+
+    
+    }while (mwpLine!=-1)
+
+    var itemcountsWithoutMWP = replacementOrderRecord.getLineCount({
+                    sublistId: 'item'});
 
 
-
-
-    for (var i = 0; i < itemcounts; i++) {
+    for (var i = 0; i < itemcountsWithoutMWP; i++) {
         var lineNum = replacementOrderRecord.selectLine({
             sublistId: 'item',
             line: i
         });
 
         log.audit("Updating line " + i)
-
-        var lineItem = replacementOrderRecord.getCurrentSublistValue({
+            
+            replacementOrderRecord.setCurrentSublistValue({
             sublistId: 'item',
-            fieldId: 'item',
+            fieldId: 'price',
             line: i,
+            value: -1,
+            ignoreFieldChange: true
         });
-
-
-        if (lineItem==27062){
-
-            log.audit("Removing MWP from line " + i )
-
-/*            replacementOrderRecord.removeLine({
-                sublistId: 'item',
-                line: i,
-                ignoreRecalc: true
-            })
-*/
-        }
-
-        else{
-
-            log.audit("Processing item " + lineItem + " on line " + i)
 
             replacementOrderRecord.setCurrentSublistValue({
             sublistId: 'item',
@@ -126,12 +134,13 @@ try {
             ignoreFieldChange: true
         });
 
-            log.audit("Comitting Line " + i)
+
+        log.audit("Comitting Line " + i)
             replacementOrderRecord.commitLine({
                 sublistId: 'item',
                 line: i
             });
-        }
+        
 
     }
 
