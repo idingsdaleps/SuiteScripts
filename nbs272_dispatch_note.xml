@@ -1,0 +1,543 @@
+<?xml version="1.0"?><!DOCTYPE pdf PUBLIC "-//big.faceless.org//report" "report-1.1.dtd">
+<pdf>
+	<head>
+		<#assign auxcur = "">
+		<#if record.currencysymbol = "GBP">
+		<#assign
+		auxcur = "£">
+		<#elseif record.currencysymbol = "EUR">
+		<#assign auxcur =
+		"€">
+		<#elseif record.currencysymbol = "USD">
+		<#assign auxcur = "$">
+		</#if>
+		<#setting number_format="${auxcur},##0.00">
+		<#setting
+		url_escaping_charset='ISO-8859-1'>
+		<link name="spfont" type="font" subtype="opentype"
+			src="https://system.na1.netsuite.com/core/media/media.nl?id=24025&#38;c=TSTDRV1196566&#38;h=f7a78f0dcb232f03444c&#38;_xt=.ttf"
+			src-bold="https://system.na1.netsuite.com/core/media/media.nl?id=24025&#38;c=TSTDRV1196566&#38;h=f7a78f0dcb232f03444c&#38;_xt=.ttf"
+			bytes="2" />
+		<style type="text/css">
+			* {
+			font-family: sans-serif;
+			table-layout: fixed;
+			}
+			td{
+			padding:0px;
+			}
+			table{
+			cellspacing:0;
+			}
+			body{
+			font-size: 9pt;
+			}
+			table.itemList th, table.itemList td{
+			padding: 2px;
+			margin-left: 2px;
+			margin-right: 2px;
+			margin-top: 0px;
+			vertical-align: top;
+			}
+			table.itemList td{
+			background-color: #F1F3F4;
+			}
+			table.itemList th{
+			color:#F1F3F4; background-color:#1F3556
+			margin-bottom: 8px;
+			}
+			tr.itemRow{
+			height:15pt;
+			}
+		</style>
+
+		<macrolist>
+			<macro id="nlheader">
+				<table id="header1">
+					<tr>
+						<td align="left" width="300px" style="vertical-align:middle;">
+							<span style="font-size: 18pt;">
+								DESPATCH NOTE
+							</span>
+						</td>
+						<td align="center" width="300px">
+							<barcode codetype="code128" showtext="true"
+								value="${record.tranid}" />
+						</td>
+						<td align="right" vertical-align="top" width="300px"
+							style="padding-bottom:10px">
+							<img src="${data.logo?replace('&','&amp;')}" width="200px"
+								height="44px" />
+						</td>
+					</tr>
+				</table>
+				<table id="header1" style="width:100%">
+					<tr>
+						<td align="left" width="380px">
+							<table width="100%">
+								<tr style="font-size:8pt; margin-bottom:10px">
+									<td width="200px">
+										<table width="100%">
+											<tr>
+												<td style="background-color: #F1F3F4; margin-right:5px">Your customer number:</td>
+												<td>${entity.custentity_nbs_customernumber}</td>
+											</tr>
+											<tr>
+												<td style="background-color: #F1F3F4; margin-right:5px">Your reference:</td>
+												<td>${record.otherrefnum}</td>
+											</tr>
+											<tr>
+												<td style="background-color: #F1F3F4; margin-right:5px">Order number:</td>
+												<td>${record.tranid}</td>
+											</tr>
+											<tr>
+												<td style="background-color: #F1F3F4; margin-right:5px">Order date:</td>
+												<td>${record.trandate}</td>
+											</tr>
+											<tr>
+												<td style="background-color: #F1F3F4; margin-right:5px">Delivery method:</td>
+												<td>${record.shipmethod}</td>
+											</tr>
+										</table>
+									</td>
+									<td>
+										<#if data.shipmethod?contains('Next Day')>
+										<table width="100%">
+											<tr></tr>
+											<tr></tr>
+											<tr></tr>
+											<tr>
+												<td style="font-size:14pt;font-style: italic;"
+													align="right">
+													<b>NEXT DAY</b>
+												</td>
+											</tr>
+											<tr></tr>
+										</table>
+
+										</#if>
+
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Ordered by:
+										<br />
+										${record.billaddress}
+									</td>
+									<td>
+										Deliver to:
+										<br />
+										${record.shipaddress}
+									</td>
+								</tr>
+							</table>
+						</td>
+						<td align="center">
+							<table width="100%">
+								<tr>
+									<td>
+										<p align="center">
+											${companyInformation.custrecord_nbs_deliverynoteaddress}
+											<br />
+											${companyInformation.custrecord_nbs_deliverynotedisclaimer}
+										</p>
+									</td>
+								</tr>
+								<tr>
+									<td style="margin-top:7px">
+										<p align="right">
+											Page
+											<pagenumber />
+											of
+											<totalpages />
+										</p>
+										<p align="right" style="margin-top:0px">
+											${.now?string["dd/MM HH:mm"]}
+											<#if record.custbody_nbs_source = 'Mail'>
+
+											<#if record.leadsource?contains('PS194A')>*</#if>
+
+											<#if record.leadsource?contains('PS193A')>*</#if>
+
+											<#if record.leadsource?contains('PS193B')>*</#if>
+
+											<#if record.leadsource?contains('PS191A')>*</#if>
+
+											<#if record.leadsource?contains('PS191B')>*</#if>
+
+											<#if record.leadsource?contains('PS191C')>*</#if>
+
+											<#if record.leadsource?contains('PS191D')>*</#if>
+
+											</#if>
+										</p>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+
+			</macro>
+
+			<macro id="nlfooter">
+
+				<table>
+
+					<tr style="heeight:115pt;baackground-color:blue">
+						<td style="padding:0px; margin:0px; margin-top:5px">
+
+							<table class="itemList" width="100%;">
+								<tr>
+									<td style="background-color:white;baackground-color:red;">
+										<img src="${data.marketingImg}" width="675px"
+											height="110px" />
+									</td>
+								</tr>
+							</table>
+
+
+						</td>
+					</tr>
+				</table>
+
+
+			</macro>
+
+
+
+
+		</macrolist>
+	</head>
+
+	<body header="nlheader" header-height="200pt" footer="nlfooter"
+		footer-height="100pt" padding="0.5in 0.5in 0.1in 0.5in" size="Letter">
+
+		<#if items.item?has_content>
+
+		<#assign grossamtSum = 0>
+		<#assign numLines
+		= 23>
+		<#assign currentPage = 0>
+		<#assign currentLine = 0>
+		<#assign
+		giftLines= 0>
+		<#assign itemIndex = 0>
+
+		<table class="itemList">
+			<#list items.item as item>
+
+
+			<#if itemIndex % numLines == 0>
+			<#assign
+			currentPage = currentPage + 1>
+
+			<tr class="thead">
+
+				<th align="center" width="30px">
+					<span>QTY</span>
+				</th>
+				<th align="center" width="100px" style="margin-left:0px;">
+					<span>CODE</span>
+				</th>
+				<th align="left" width="380px">
+					<span>DESCRIPTION</span>
+				</th>
+				<th align="center" width="80px">
+					<span>UNIT PRICE</span>
+				</th>
+				<th align="center" width="80px">
+					<span>AMOUNT</span>
+				</th>
+			</tr>
+			</#if>
+
+
+
+
+
+
+			<tr class="itemRow">
+
+				<#assign currentLine = (itemIndex % numLines) + 1>
+
+
+				<td align="center" width="30px">
+					<span>${item.quantity}
+					</span>
+				</td>
+				<td align="center" style="margin-left:0px" width="100px">
+					<span>
+						${item.custcol_nbs_itemproductcode}
+						<span align="right"><#if item.custcol_nbs_itemcondition ==
+							'1'><#elseif item.custcol_nbs_itemcondition?has_content &&
+							item.custcol_nbs_itemcondition != '' &&
+							item.custcol_nbs_itemcondition != '1'>*</#if></span>
+					</span>
+				</td>
+
+				<td align="left" width="380px">
+					<span>
+						<#assign aux = item.description>
+						<#assign aux = aux?replace("
+						EUR ", "€")>
+						<#assign aux = aux?replace(" GBP ", "£")>
+						<#assign aux
+						= aux?replace(" USD ", "$")>
+						<#assign aux = aux?replace("\n", " ")>
+
+
+						<#if aux?contains('^^KitComponents^^')>
+
+						<#else>
+
+						<#if aux?length gt
+						223>
+						<#assign aux = aux?substring(0, 223) + "...">
+						</#if>
+
+						${aux}
+
+						</#if>
+
+
+					</span>
+
+				</td>
+
+				<td align="right" width="80px">
+					<#if data.hidePrices = 'F'>
+					<#if item.grossamt?length != 0 &&
+					item.grossamt != "0">
+					<span>${(item.grossamt?number)/(item.quantity?number)}</span>
+					</#if>
+					</#if>
+				</td>
+				<td align="right" width="80px">
+					<#if data.hidePrices = 'F'>
+					<#if item.grossamt?length != 0 &&
+					item.grossamt != "0">
+					<span>${item.grossamt?number}</span>
+					</#if>
+					</#if>
+				</td>
+
+
+				<#assign grossamtSum = grossamtSum + item.grossamt?number>
+
+
+
+
+				<#assign itemIndex = itemIndex + 1>
+
+				<!-- Description for non-gift lines -->
+				<#if aux?length gt 70 && (record.custbody_nbs_giftmessage?length ==
+				0 || !aux?contains("** GIFT MESSAGE **"))>
+				<#if currentLine != numLines>
+				<#assign itemIndex = itemIndex + 1>
+				<#assign currentLine = (itemIndex % numLines) + 1>
+				</#if>
+				</#if>
+			</tr>
+
+
+
+
+
+
+			<#if item.kitComponents?length != 0 >
+			<#list item.kitComponents?split('^') as kitComponent>
+			<#assign currentLine = (itemIndex % numLines) + 1>
+
+			<tr class="itemRow">
+				<td align="right">
+					<span>&nbsp;
+					</span>
+				</td>
+				<td align="left" style="margin-left:0px">
+					<span>&nbsp;
+					</span>
+				</td>
+				<td align="left"
+					style="padding:0px 0px 0px 0px;padding-left: 15px;">
+					<span>${kitComponent}</span>
+				</td>
+				<td align="right">
+					<span>&nbsp;
+					</span>
+				</td>
+				<td align="right">
+					<span>&nbsp;
+					</span>
+				</td>
+				<#assign itemIndex = itemIndex + 1>
+			</tr>
+
+
+
+			</#list>
+
+
+			</#if>
+
+
+			<!-- 2.0 02/01/2018 - AS (NoBlue) - to fix the issue related to ticket 
+				81496 -->
+			<#if record.custbody_nbs_giftmessage?length gt 0 >
+
+			<#if record.custbody_nbs_giftorder?string == 'Yes' >
+
+			<#if item.description?contains('GIFT MESSAGE')>
+
+			<#assign giftLines = record.custbody_nbs_giftmessage?length?int/50>
+			<#assign giftLines = giftLines?ceiling + 1>
+			<#assign giftLines = giftLines/2>
+			<#assign giftLines = giftLines?ceiling>
+			<#assign currentLine = currentLine + giftLines + 1>
+
+
+			</#if>
+			</#if>
+			</#if>
+
+
+
+			<#if currentLine == numLines>
+
+		</table>
+
+		<pbr />
+
+		<table class="itemList">
+
+			<#assign currentLine = 0 />
+			<#assign itemIndex = 0 />
+
+			</#if>
+
+
+			</#list>
+
+
+			<#if currentLine != numLines && currentLine gte 0 >
+
+			<#assign numLinesEnd = 23 />
+
+			<#if currentLine lt numLines></#if>
+
+			<#if currentLine gt numLines><#assign currentLine = (currentLine %
+			numLines) - 1 /></#if>
+
+
+
+			<#list (currentLine)..(numLinesEnd) as i>
+
+			<tr class="itemRow">
+				<td align="right" width="30px">
+					<span></span>
+				</td>
+				<td align="left" style="margin-left:0px" width="100px">
+					<span></span>
+				</td>
+				<td align="left"
+					style="padding:0px 0px 0px 0px;padding-left: 15px;" width="380px">
+					<span></span>
+				</td>
+				<td align="right" width="80px">
+					<span></span>
+				</td>
+				<td align="right" width="80px">
+					<span></span>
+				</td>
+
+			</tr>
+
+			</#list>
+
+
+			</#if>
+
+
+		</table>
+
+
+
+
+
+		<table>
+
+			<tr style="heeight:55pt;baackground-color: purple">
+				<td colspan="5"
+					style="background-color:white; padding:0px; margin:0px; margin-top:5px">
+
+					<table class="itemList" width="100%"
+						style="baackground-color:yellow;">
+						<tr>
+							<td width="400px" align="center"
+								style="vertical-align:middle; background-color: #F1F3F4; padding:10px">
+								Thank you for placing this order with Postscript Books.
+								If
+								you have any queries please contact Customer Services team on
+								01626 897123 or email help@psbooks.co.uk
+							</td>
+							<td width="250px"
+								style="margin-left:80px; background-color: #F1F3F4; padding:3px">
+								<table width="100%">
+									<tr>
+										<td>Product Total</td>
+										<td align="right"><#if data.hidePrices = 'F'>${grossamtSum}</#if></td>
+									</tr>
+
+									<#if record.discounttotal?has_content && record.discounttotal
+									!= 0 >
+
+									<#assign discountAmt = record.total -
+									record.altshippingcost - record.giftcertapplied - grossamtSum/>
+
+
+									<tr>
+										<td>Discount</td>
+										<td align="right"><#if data.hidePrices = 'F'>${discountAmt}</#if></td>
+									</tr>
+
+									</#if>
+
+
+
+
+
+
+									<tr>
+										<td>Postage &amp; Packing</td>
+										<td align="right">
+											<#if data.hidePrices = 'F'>
+											<#if
+											record.shippingcost?length != 0>
+											${record.shippingcost}
+											<#else>
+											${auxcur}0.00
+											</#if>
+											</#if>
+										</td>
+									</tr>
+									<tr>
+										<td>Total Amount</td>
+										<td align="right"><#if record.total = 0>${auxcur}0.00<#elseif
+											data.hidePrices =
+											'F'>${record.total}</#if></td> <!-- grossamtSum+record.altshippingcost+discount -->
+									</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+
+
+				</td>
+			</tr>
+		</table>
+
+
+		</#if>
+	</body>
+</pdf>
