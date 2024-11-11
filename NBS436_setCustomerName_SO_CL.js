@@ -51,15 +51,65 @@ define(['N/error', 'N/search', 'N/log', 'N/ui/message', 'N/currentRecord'],
                
        }
      
+       function findPendingOrders(customer){
+
+        console.log("Searching for orders against customer  " + customer);
+        var customerSearchObj = search.create({
+           type: "customer",
+           filters:
+           [
+              ["transaction.type","anyof","SalesOrd"], 
+              "AND", 
+              ["transaction.anylineitem","anyof","373075"], 
+              "AND", 
+              ["formulatext: {transaction.custbody_ps_credit_redemption_procd}","is","F"], 
+              "AND", 
+              ["internalid","anyof",customer]
+           ],
+           columns:
+           [
+              search.createColumn({name: "internalid", label: "Internal ID"}),
+              search.createColumn({
+                 name: "internalid",
+                 join: "transaction",
+                 label: "Internal ID"
+              }),
+              search.createColumn({
+                 name: "custbody_ps_credit_redemption_invoice",
+                 join: "transaction",
+                 label: "Credit Redemption Invoice"
+              })
+           ]
+        });
+        var searchResultCount = customerSearchObj.runPaged().count;
+        console.log("Unbilled credit orders - " + searchResultCount);
+
+        return searchResultCount;
+
+       }
+
+
         function addCredit(context){
             var cr = currentRecord.get();
-
             var customer = cr.getValue({fieldId: 'entity'});
-            console.log("Customer ID " + customer)
             var balance = cr.getValue({fieldId: 'balance'});
-            console.log('Customer Balance ' + balance);
+
             var negatedBalance = balance/-1
-            if (balance<0)
+
+            var pendingOrders = findPendingOrders(customer)
+
+
+            if ((balance<0)&&(pendingOrders>0)){
+                var myMsg = message.create({
+                 title: "Pending Orders", 
+                 message: "Customer has unbilled credit orders. Please try again later", 
+                 type: message.Type.INFORMATION
+                });
+                myMsg.show({ duration : 5000 });
+
+            }
+
+            if ((balance<0)&&(pendingOrders==0))
 
             {
 
@@ -120,7 +170,6 @@ define(['N/error', 'N/search', 'N/log', 'N/ui/message', 'N/currentRecord'],
                     fireSlavingSync: true
                     })
 
-
                     cr.setCurrentSublistValue({
                     sublistId: 'item',
                     fieldId: 'taxcode',
@@ -143,7 +192,8 @@ define(['N/error', 'N/search', 'N/log', 'N/ui/message', 'N/currentRecord'],
                 console.log(e)
             }
             }
-            else
+
+            if(balance>=0)
             {
                 var myMsg = message.create({
                  title: "No Credit", 

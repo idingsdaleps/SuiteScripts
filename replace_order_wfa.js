@@ -66,6 +66,12 @@ try {
     value: 35
     });
 
+    replacementOrderRecord.setValue({
+    fieldId: 'custbody_ps_magento_order_total',
+    value: 0
+    });
+
+
    var mwpLine
     do{
     var mwpLine = replacementOrderRecord.findSublistLineWithValue({
@@ -88,6 +94,30 @@ try {
 
     
     }while (mwpLine!=-1)
+
+   var discountLine
+    do{
+    var discountLine = replacementOrderRecord.findSublistLineWithValue({
+    sublistId: 'item',
+    fieldId: 'item',
+    value: 240932})
+
+        if (discountLine==-1){
+            log.audit("No discount lines remaining")
+        }
+        else {
+
+            log.audit("Discount found on line " + discountLine + ", removing")
+            replacementOrderRecord.removeLine({
+                sublistId: 'item',
+                line: discountLine,
+                ignoreRecalc: true
+            })
+        }
+
+    
+    }while (discountLine!=-1)
+
 
     var itemcountsWithoutMWP = replacementOrderRecord.getLineCount({
                     sublistId: 'item'});
@@ -182,4 +212,3 @@ try {
         onAction: onAction
     }
 }); 
-
