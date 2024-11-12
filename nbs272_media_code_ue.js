@@ -30,10 +30,12 @@ function userEventBeforeSubmit(type){
 	
 	var currentRecord = nlapiGetNewRecord();
    	var leadSource = currentRecord.getFieldValue('leadsource');
-   	var campaign = nlapiLoadRecord('campaign', leadSource);
-	var channel = campaign.getFieldValue('custevent_nbs_channel');
-	if(!!channel){
-			currentRecord.setFieldValue('class', channel);
-	}
-    
+   	if(!!leadSource){
+	   	var campaign = nlapiLoadRecord('campaign', leadSource);
+		var channel = campaign.getFieldValue('custevent_nbs_channel');
+		if(!!channel){
+
+				currentRecord.setFieldValue('class', channel);
+		}
+    }
 }
