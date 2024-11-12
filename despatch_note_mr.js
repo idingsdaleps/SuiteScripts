@@ -53,7 +53,7 @@ define(['N/search', 'N/log', 'N/record', 'N/runtime', 'N/render', 'N/file', 'N/c
 
 			filters[0] = search.createFilter({name: 'custbody_nbs_generatedispatchnote', operator: 'is', values:'T'});
 			filters[1] = search.createFilter({name: 'mainline', operator: 'is', values:'T'});
-
+			filters[2] = search.createFilter({name: "trandate", operator: "within", values: "previousoneyear"});
 			var columns = [];
 			columns[0] =  new search.createColumn({name:'internalid'});
 
@@ -206,7 +206,7 @@ define(['N/search', 'N/log', 'N/record', 'N/runtime', 'N/render', 'N/file', 'N/c
 			var shipItem = record.load({type: "shipItem", id: shipmethod});
           	var shipItemDisplayName = shipItem.getText({fieldId:"displayname"});
         }
-		var shipItem = record.load({type: "shipItem", id: shipmethod});
+	//	var shipItem = record.load({type: "shipItem", id: shipmethod});
 		var data = {marketingImg: marketingImage(soRecord), 
 				hidePrices:'F', 
 				logo : 'https://system.eu2.netsuite.com/core/media/media.nl?id=129&c=4480225&h=eac990dc27a958a29f7a',
