@@ -89,27 +89,88 @@ define(['N/error', 'N/search', 'N/log', 'N/ui/message', 'N/currentRecord'],
        }
 
 
+        function totalPendingOrders(customer){
+
+        console.log("Found outstanding credit orders, totalling for customer  " + customer);
+        var customerSearchObj = search.create({
+           type: "customer",
+           filters:
+           [
+              ["transaction.anylineitem","anyof","373075"], 
+              "AND", 
+              ["transaction.custbody_ps_credit_redemption_procd","is","F"], 
+              "AND", 
+              ["transaction.mainline","is","F"], 
+              "AND", 
+              ["internalid","anyof",customer], 
+              "AND", 
+              ["transaction.type","anyof","SalesOrd"]
+            ],
+           columns:
+           [
+              search.createColumn({
+                 name: "internalid",
+                 summary: "GROUP",
+                 label: "Internal ID"
+              }),
+              search.createColumn({
+                 name: "formulacurrency",
+                 summary: "SUM",
+                 formula: "case when {transaction.item} = 'CREDIT_REDEEM' then {transaction.amount} else 0 end",
+                 label: "Formula (Currency)"
+              })
+           ]
+        });
+
+        var outstandingBalance = 0
+
+        customerSearchObj.run().each(function(result){
+                outstandingBalance = outstandingBalance + Number(result.getValue({name: "formulacurrency",
+                 summary: "SUM",
+                 formula: "case when {transaction.item} = 'CREDIT_REDEEM' then {transaction.amount} else 0 end",
+                 label: "Formula (Currency)"
+
+                }));
+             return true;
+         });
+
+        console.log("Unbilled credit orders total - " + outstandingBalance);
+
+        return outstandingBalance;
+
+       }
+
+
+
+
+
         function addCredit(context){
             var cr = currentRecord.get();
             var customer = cr.getValue({fieldId: 'entity'});
-            var balance = cr.getValue({fieldId: 'balance'});
+            var nsBalance = cr.getValue({fieldId: 'balance'});
+
+            
+
+            console.log("NS Balance " + nsBalance)
 
             var negatedBalance = balance/-1
 
             var pendingOrders = findPendingOrders(customer)
 
-
-            if ((balance<0)&&(pendingOrders>0)){
-                var myMsg = message.create({
-                 title: "Pending Orders", 
-                 message: "Customer has unbilled credit orders. Please try again later", 
-                 type: message.Type.INFORMATION
-                });
-                myMsg.show({ duration : 5000 });
-
+            if(pendingOrders>0){
+                var pendingBalance = totalPendingOrders(customer)
+            }
+            else{
+                var pendingBalance = 0
             }
 
-            if ((balance<0)&&(pendingOrders==0))
+            var balance = nsBalance - pendingBalance
+
+            console.log("Calculated Balance " + balance)
+            var amount = cr.getValue({fieldId: 'total'});
+
+
+            if ((balance<0)&&(amount>0))
 
             {
 
@@ -133,10 +194,18 @@ define(['N/error', 'N/search', 'N/log', 'N/ui/message', 'N/currentRecord'],
 
                 try{
 
-                    var amount = cr.getValue({fieldId: 'total'});
+                    
                     console.log("Order Amount " +  amount)
                     var creditToApply = Math.min(negatedBalance, amount)
                     var creditToApplyAmount = creditToApply/-1
+                    var newBalance = balance - creditToApplyAmount
+
+                    cr.setValue({
+                    fieldId: 'custbody_nbs_newbalance',
+                    value: newBalance
+                    })
+
+                    console.log("New Balance " + newBalance)
 
                     cr.selectNewLine({
                     sublistId: 'item',
@@ -198,6 +267,16 @@ define(['N/error', 'N/search', 'N/log', 'N/ui/message', 'N/currentRecord'],
                 var myMsg = message.create({
                  title: "No Credit", 
                  message: "Customer has no credit balance available", 
+                 type: message.Type.INFORMATION
+                });
+                myMsg.show({ duration : 5000 });
+            }
+
+            if(amount<=0)
+            {
+                var myMsg = message.create({
+                 title: "Credit Unavaible", 
+                 message: "Order total must be greater than 0 to apply credit", 
                  type: message.Type.INFORMATION
                 });
                 myMsg.show({ duration : 5000 });

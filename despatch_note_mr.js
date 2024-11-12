@@ -76,12 +76,12 @@ define(['N/search', 'N/log', 'N/record', 'N/runtime', 'N/render', 'N/file', 'N/c
 		var result = JSON.parse(context.value);
 
 		try{
-			log.debug({
+			log.audit({
 				title: result.id, 
 				details: 'Generating...'
 			});
 			generateDispatchNote(result.id);
-			log.debug({
+			log.audit({
 				title: result.id, 
 				details: 'Done!'
 			});
