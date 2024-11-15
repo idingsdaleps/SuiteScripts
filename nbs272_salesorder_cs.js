@@ -43,8 +43,6 @@ function(record, runtime, search, log, dialog, message) {
                 if (entityId){
                     log.debug('entityId',entityId);
                     itemsPurchased = getPreviousItems(entityId);
-                    console.log(itemsPurchased);
-
                     
                     var entityFields = [];
                     for(var f in fields){
@@ -115,7 +113,7 @@ function(record, runtime, search, log, dialog, message) {
             if(!!entityId){
 
             itemsLost = getLostItems(entityId)
-            console.log(itemsLost);
+
             if (itemsLost.length>0){
                 lostPopup(itemsLost, scriptContext)
             }
@@ -322,6 +320,19 @@ function(record, runtime, search, log, dialog, message) {
                     sublistId: 'item',
                     fieldId: 'item_display'
                 });
+                var itemQuantity = currentRecord.getCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'quantity'
+                });
+                var itemRejected = currentRecord.getCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'custcol_ps_restock_rejected'
+                });
+                var itemAccepted = currentRecord.getCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'custcol_ps_restock_accepted'
+                });
+
                 var customerId = currentRecord.getValue({fieldId: 'entity'});
                 if(!!customerId && !!itemId && (typeof itemsPurchased !== "undefined")){
                     //var salesOrders = getPreviousSalesOrders(currentRecord.id, customerId, itemId);
@@ -334,6 +345,34 @@ function(record, runtime, search, log, dialog, message) {
                         return confirm(text);
                     }
                 }
+
+                if((!!itemQuantity>0)&&(itemRejected>0)){
+                    console.log ('Rejected item accepted')
+                    currentRecord.setCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'custcol_ps_restock_accepted',
+                    value: 1
+                     });
+                    currentRecord.setCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'custcol_ps_restock_rejected',
+                    value: 0
+                     });
+                }
+                if((!!itemQuantity==0)&&(itemAccepted>0)){
+                    console.log ('Accepted line rejected')
+                    currentRecord.setCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'custcol_ps_restock_accepted',
+                    value: 0
+                     });
+                    currentRecord.setCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'custcol_ps_restock_rejected',
+                    value: 1
+                     });
+                }
+
             }
         }
         return true;
@@ -501,7 +540,7 @@ function(record, runtime, search, log, dialog, message) {
               "AND", 
               ["sum(quantity)","equalto","0"], 
               "AND", 
-              ["sum(custcol_nbs_quantitylost)","greaterthan","1"], 
+              ["sum(custcol_nbs_quantitylost)","greaterthan","0"], 
               "AND", 
               ["sum(custcol_ps_restock_rejected)","notgreaterthan","0"]
                    ];
@@ -559,11 +598,15 @@ function(record, runtime, search, log, dialog, message) {
         var currentRecord = scriptContext.currentRecord;
         for (var i = 0; i < restockItems.length; i++){
             console.log ('Adding item ' + restockItems[i].internalId + ' to line ' + i)
-            currentRecord.insertLine({ sublistId: 'item', line: i });
+            currentRecord.insertLine({ 
+                sublistId: 'item', 
+                line: i
+                 });
             currentRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'item',
-                value: restockItems[i].internalId
+                value: restockItems[i].internalId,
+                fireSlavingSync: true
             });
             currentRecord.setCurrentSublistValue({
                 sublistId: 'item',
@@ -575,7 +618,13 @@ function(record, runtime, search, log, dialog, message) {
                 fieldId: 'custcol_ps_restock_accepted',
                 value: 1
             });
-            currentRecord.commitLine({sublistId:'item'})
+
+
+            try{
+            currentRecord.commitLine({
+                sublistId:'item'
+            })}
+            catch (e){console.log(e)}
         }
 
 
@@ -585,13 +634,17 @@ function(record, runtime, search, log, dialog, message) {
 
 
         var currentRecord = scriptContext.currentRecord;
-        for (var i = 0; i < restockItems.length; i++){
+            for (var i = 0; i < restockItems.length; i++){
             console.log ('Adding item ' + restockItems[i].internalId + ' to line ' + i)
-            currentRecord.insertLine({ sublistId: 'item', line: i });
+            currentRecord.insertLine({ 
+                sublistId: 'item', 
+                line: i
+                 });
             currentRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'item',
-                value: restockItems[i].internalId
+                value: restockItems[i].internalId,
+                fireSlavingSync: true
             });
             currentRecord.setCurrentSublistValue({
                 sublistId: 'item',
@@ -603,7 +656,13 @@ function(record, runtime, search, log, dialog, message) {
                 fieldId: 'custcol_ps_restock_rejected',
                 value: 1
             });
-            currentRecord.commitLine({sublistId:'item'})
+
+
+            try{
+            currentRecord.commitLine({
+                sublistId:'item'
+            })}
+            catch (e){console.log(e)}
         }
 
 
