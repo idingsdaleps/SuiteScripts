@@ -2,7 +2,7 @@
  * @NApiVersion 2.x
  * @NScriptType WorkflowActionScript
  */
-define(['N/record','N/runtime','N/task','./moment.js', 'N/https'], function(record, runtime,task, moment, https) {
+define(['N/record','N/runtime','N/task','./moment.js', 'N/https', 'N/search'], function(record, runtime,task, moment, https, search) {
 function onAction(scriptContext){
 
 
@@ -123,6 +123,9 @@ try {
                     sublistId: 'item'});
 
 
+
+    var itemsOOS = [];
+
     for (var i = 0; i < itemcountsWithoutMWP; i++) {
         var lineNum = replacementOrderRecord.selectLine({
             sublistId: 'item',
@@ -130,6 +133,47 @@ try {
         });
 
         log.audit("Updating line " + i)
+
+        lineItemId = replacementOrderRecord.getCurrentSublistValue({
+            sublistId: 'item',
+            fieldId: 'item',
+            line: i
+        })
+
+        log.audit("Checking stock for item " + lineItemId);
+
+        var columns = [search.createColumn({name: "quantityavailable", label: "Available"})];
+        var filters = [["internalid","anyof",lineItemId]];
+
+        var itemSearchObj = search.create({
+               type: "item",
+               filters: filters,
+               columns: columns
+        });
+
+            itemSearchObj.run().each(function(result){
+               lineItemAvailable = result.getValue(columns[0]);
+            });
+
+        if (!!lineItemAvailable){
+
+        log.audit("Item has stock level " + lineItemAvailable);
+        }
+
+        if ((lineItemAvailable<=0)||(!lineItemAvailable)){
+
+            log.audit("Item is OOS, removing")
+            itemsOOS.push[lineItemId]
+
+            replacementOrderRecord.removeLine({
+                sublistId: 'item',
+                line: i,
+                ignoreRecalc: true
+            })
+
+        }
+
+        else{
             
             replacementOrderRecord.setCurrentSublistValue({
             sublistId: 'item',
@@ -164,6 +208,24 @@ try {
             ignoreFieldChange: true
         });
 
+            replacementOrderRecord.setCurrentSublistValue({
+            sublistId: 'item',
+            fieldId: 'custcol_nbs272_quantityavailable',
+            line: i,
+            value: lineItemAvailable,
+            ignoreFieldChange: true
+        });
+
+
+        }
+
+
+        replacementOrderRecord.setValue({
+            fieldId: 'memo',
+            value: ' The following item(s) are out of stock and were removed from the replacment order - ' + itemsOOS
+
+
+        })
 
         log.audit("Comitting Line " + i)
             replacementOrderRecord.commitLine({
