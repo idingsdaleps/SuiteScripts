@@ -72,6 +72,7 @@ try {
     });
 
 
+
    var mwpLine
     do{
     var mwpLine = replacementOrderRecord.findSublistLineWithValue({
@@ -117,6 +118,31 @@ try {
 
     
     }while (discountLine!=-1)
+
+
+    var staffDiscountLine
+    do{
+    var staffDiscountLine = replacementOrderRecord.findSublistLineWithValue({
+    sublistId: 'item',
+    fieldId: 'item',
+    value: 324554})
+
+        if (staffDiscountLine==-1){
+            log.audit("No staff discount lines remaining")
+        }
+        else {
+
+            log.audit("Staff discount found on line " + discountLine + ", removing")
+            replacementOrderRecord.removeLine({
+                sublistId: 'item',
+                line: staffDiscountLine,
+                ignoreRecalc: true
+            })
+        }
+
+    
+    }while (staffDiscountLine!=-1)
+
 
 
     var itemcountsWithoutMWP = replacementOrderRecord.getLineCount({
@@ -171,9 +197,19 @@ try {
                 ignoreRecalc: true
             })
 
+            i--;
+            itemcountsWithoutMWP--;
+
         }
 
         else{
+            replacementOrderRecord.setCurrentSublistValue({
+            sublistId: 'item',
+            fieldId: 'quantity',
+            line: i,
+            value: 0,
+            ignoreFieldChange: true
+        });
             
             replacementOrderRecord.setCurrentSublistValue({
             sublistId: 'item',
@@ -191,7 +227,6 @@ try {
             ignoreFieldChange: true
         });
 
-
             replacementOrderRecord.setCurrentSublistValue({
             sublistId: 'item',
             fieldId: 'amount',
@@ -199,15 +234,6 @@ try {
             value: 0,
             ignoreFieldChange: true
         });
-
-            replacementOrderRecord.setCurrentSublistValue({
-            sublistId: 'item',
-            fieldId: 'quantity',
-            line: i,
-            value: 0,
-            ignoreFieldChange: true
-        });
-
             replacementOrderRecord.setCurrentSublistValue({
             sublistId: 'item',
             fieldId: 'custcol_nbs272_quantityavailable',
@@ -217,24 +243,38 @@ try {
         });
 
 
-        }
 
-
-        replacementOrderRecord.setValue({
-            fieldId: 'memo',
-            value: ' The following item(s) are out of stock and were removed from the replacment order - ' + itemsOOS
-
-
-        })
-
-        log.audit("Comitting Line " + i)
+        log.audit("Comitting Line " + i + " item ID " + lineItemId)
             replacementOrderRecord.commitLine({
                 sublistId: 'item',
                 line: i
             });
         
+    }
+
+
+
+}    
+
+
+    if (itemsOOS.length>0){
+
+    replacementOrderRecord.setValue({
+    fieldId: 'memo',
+    value: 'Replacment for order ' + ORDER_ID + ', the folllowing items were removed due to being OOS - ' + itemsOOS
+    });
+
 
     }
+    else{
+
+    replacementOrderRecord.setValue({
+    fieldId: 'memo',
+    value: 'Replacment for order ' + ORDER_ID
+    });
+
+    }
+
 
     var copiedRecord = replacementOrderRecord.save();
 
@@ -259,7 +299,7 @@ try {
 
     salesorderRecord.save();
 
-    log.audit("Replacement order ID field populated")
+    log.audit("Replacement order ID field populated, replacement complete")
 
 
  }

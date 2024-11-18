@@ -88,7 +88,7 @@ function(record, runtime, search, log, dialog, message) {
      */
     function setGetAuth(currentRecord){
         var getAuth = !!currentRecord.getValue({fieldId:'ccnumber'}) && !!currentRecord.getValue({fieldId:'ccsecuritycode'}) && !!currentRecord.getValue({fieldId:'ccexpiredate'});
-        console.log(getAuth);
+
        currentRecord.setValue({fieldId:'getauth', value:getAuth});
       //if(getAuth == true){
        // currentRecord.setValue({fieldId:'paymentmethod', value:23});
@@ -105,19 +105,40 @@ function(record, runtime, search, log, dialog, message) {
     
     function fieldChanged(scriptContext) {
 
-
+        
         if (scriptContext.fieldId=='leadsource'){
 
             var currentRecord = scriptContext.currentRecord;
             var entityId = currentRecord.getValue({fieldId:'entity'});
-            if(!!entityId){
+            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
 
+
+            if((!!entityId)&&(orderSource==1)){
             itemsLost = getLostItems(entityId)
+            if (itemsLost.length>0){
+                lostPopup(itemsLost, scriptContext)
 
+            }
+        }
+        }
+
+
+        if(scriptContext.fieldId=='custbody_nbs_source'){
+            var currentRecord = scriptContext.currentRecord;
+            var entityId = currentRecord.getValue({fieldId:'entity'});
+            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
+
+
+            if((!!entityId)&&(orderSource==1)){
+            itemsLost = getLostItems(entityId)
             if (itemsLost.length>0){
                 lostPopup(itemsLost, scriptContext)
             }
-        }
+
+            }
+
+
+
         }
   
    if (scriptContext.fieldId=='entity'){
@@ -333,8 +354,13 @@ function(record, runtime, search, log, dialog, message) {
                     fieldId: 'custcol_ps_restock_accepted'
                 });
 
+                var orderIsReplacement = currentRecord.getValue({fieldId: 'custbody_nbs_replacement'});
+
+
+
+
                 var customerId = currentRecord.getValue({fieldId: 'entity'});
-                if(!!customerId && !!itemId && (typeof itemsPurchased !== "undefined")){
+                if(!!customerId && !!itemId && (typeof itemsPurchased !== "undefined") && !orderIsReplacement){
                     //var salesOrders = getPreviousSalesOrders(currentRecord.id, customerId, itemId);
                     var itemHistory = itemsPurchased.filter(function(data){ return data.itemId == itemId})
                     if(itemHistory.length > 0){
@@ -552,7 +578,7 @@ function(record, runtime, search, log, dialog, message) {
           });
 
         var searchResultCount = salesorderSearchObj.runPaged().count;
-        console.log(searchResultCount)
+        console.log('Lost item count ' + searchResultCount)
         
         salesorderSearchObj.run().each(function(result){
             itemsLost.push({itemId:result.getValue(columns[0]), name:result.getValue(columns[2]), date:result.getValue(columns[5]), internalId:result.getValue(columns[1])});
