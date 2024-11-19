@@ -13,14 +13,6 @@ const ORDER_ID = myScript.getParameter('custscript_replace_orderid');
 
 try {
 
-  /*  log.audit("Opening Sales Order " + ORDER_ID)
-
-    var salesorderRecord = record.load({
-    type: record.Type.SALES_ORDER, 
-    id: ORDER_ID,
-    isDynamic: false,
-    });
-*/
 
 
     log.audit("Copying Sales Order " + ORDER_ID)
@@ -35,6 +27,10 @@ try {
                     sublistId: 'item'});
 
     log.audit("Copied! Order has " + itemcounts + " lines")
+
+
+    // Set some replacement specific fields on the order
+
 
     replacementOrderRecord.setValue({
     fieldId: 'ccnumber',
@@ -71,6 +67,8 @@ try {
     value: 0
     });
 
+
+    //Remove MWP and discounts
 
 
    var mwpLine
@@ -145,12 +143,12 @@ try {
 
 
 
+    //Count remaining lines and iterate through them
+
     var itemcountsWithoutMWP = replacementOrderRecord.getLineCount({
                     sublistId: 'item'});
 
-
-
-    var itemsOOS = [];
+    var itemsOOS = '';
 
     for (var i = 0; i < itemcountsWithoutMWP; i++) {
         var lineNum = replacementOrderRecord.selectLine({
@@ -160,11 +158,15 @@ try {
 
         log.audit("Updating line " + i)
 
+    //Get the item ID of the line
+
         lineItemId = replacementOrderRecord.getCurrentSublistValue({
             sublistId: 'item',
             fieldId: 'item',
             line: i
         })
+
+    //Check stock level
 
         log.audit("Checking stock for item " + lineItemId);
 
@@ -186,10 +188,14 @@ try {
         log.audit("Item has stock level " + lineItemAvailable);
         }
 
+
+
+    //Remove line if its out of stock
+
         if ((lineItemAvailable<=0)||(!lineItemAvailable)){
 
             log.audit("Item is OOS, removing")
-            itemsOOS.push[lineItemId]
+            itemsOOS = itemsOOS + ' ' + lineItemId
 
             replacementOrderRecord.removeLine({
                 sublistId: 'item',
@@ -203,6 +209,10 @@ try {
         }
 
         else{
+
+
+    //Update in-stock items with 0qty and price etc
+
             replacementOrderRecord.setCurrentSublistValue({
             sublistId: 'item',
             fieldId: 'quantity',
@@ -243,6 +253,8 @@ try {
         });
 
 
+    //Commit the line
+
 
         log.audit("Comitting Line " + i + " item ID " + lineItemId)
             replacementOrderRecord.commitLine({
@@ -256,6 +268,8 @@ try {
 
 }    
 
+
+    //Set memo to reference replacement order and items removed (if applicable)
 
     if (itemsOOS.length>0){
 
@@ -276,12 +290,24 @@ try {
     }
 
 
+    //Save the new order
+
+    log.audit("Saving new order")
+
+
     var copiedRecord = replacementOrderRecord.save();
 
     log.audit("Created new SO  " + copiedRecord)
 
-    
-    log.audit("Opening original SO for editing")
+
+
+    //Link the original order to the replacement
+
+    log.audit("Updating original order " + typeof(ORDER_ID))
+
+    try{
+
+   log.audit("Opening original SO for editing")
 
     var salesorderRecord = record.load({
     type: record.Type.SALES_ORDER, 
@@ -299,6 +325,16 @@ try {
 
     salesorderRecord.save();
 
+    
+
+    }catch (e) {
+        log.error({
+            title: e.name,
+            details: e     
+        });
+     }
+
+    
     log.audit("Replacement order ID field populated, replacement complete")
 
 
