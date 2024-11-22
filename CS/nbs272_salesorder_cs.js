@@ -547,7 +547,14 @@ function(record, runtime, search, log, dialog, message) {
              join: "item",
              summary: "MAX",
              label: "Available"
-          })];
+          }),
+          search.createColumn({
+         name: "formulacurrency",
+         summary: "MAX",
+         formula: "{item.pricelevel5}",
+         label: "Formula (Currency)"
+      })
+          ];
 
         var filters = [      
             ["type","anyof","SalesOrd"], 
@@ -581,19 +588,21 @@ function(record, runtime, search, log, dialog, message) {
         console.log('Lost item count ' + searchResultCount)
         
         salesorderSearchObj.run().each(function(result){
-            itemsLost.push({itemId:result.getValue(columns[0]), name:result.getValue(columns[2]), date:result.getValue(columns[5]), internalId:result.getValue(columns[1])});
+            itemsLost.push({itemId:result.getValue(columns[0]), name:result.getValue(columns[2]), date:result.getValue(columns[5]), internalId:result.getValue(columns[1]), price:result.getValue(columns[7])});
             return true;
         });
+        console.log(itemsLost);
         return itemsLost;
+
     }
 
 
     function lostPopup(itemsLost, scriptContext){
 
-            var popupMessage = 'Customer has previously wished to buy the following but item(s) were out of stock, do you want to add to the order?<br><br><table><tr><th><b>SKU</b></th><th><b>Title</b></th><th><b>Date</b></th></tr>'
+            var popupMessage = 'Your customer previously wished to buy the below item(s) but they were out of stock. Would your customer like to add this to their order today?<br><br><table><tr><th><b>SKU</b></th><th><b>Title</b></th><th><b>Date</b></th><th><b>Price</th></tr>'
 
             for (var i = 0; i < itemsLost.length; i++){
-                popupMessage = popupMessage + '<tr><td>' + itemsLost[i].itemId + '</td><td>' + itemsLost[i].name + '</td><td>' + itemsLost[i].date +'</td></tr>'
+                popupMessage = popupMessage + '<tr><td>' + itemsLost[i].itemId + '</td><td>' + itemsLost[i].name + '</td><td>' + itemsLost[i].date +'</td><td>£'+ itemsLost[i].price +'</td></tr>'
             }
 
             popupMessage = popupMessage + '</table>'
