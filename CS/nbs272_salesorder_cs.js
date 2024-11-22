@@ -27,6 +27,8 @@ function(record, runtime, search, log, dialog, message) {
             setGetAuth(currentRecord);  
             setSalesOrderFieldsFromCustomer(currentRecord);
 
+
+
         
             function setSalesOrderFieldsFromCustomer(newRecord){
                 var fields = {custbody_nbs436_data_protection_flag:'custentity_nbs_dataprotectionflag',
@@ -43,6 +45,17 @@ function(record, runtime, search, log, dialog, message) {
                 if (entityId){
                     log.debug('entityId',entityId);
                     itemsPurchased = getPreviousItems(entityId);
+                    itemsLost = getLostItems(entityId);
+                    if (itemsLost.length>0){
+                            var restockMsg = message.create({
+                            title: 'Restock Alert',
+                            message: 'Customer has restock alerts! Click "Restock Alerts" button to view them',
+                            type: message.Type.WARNING,
+                             });
+                            restockMsg.show();
+
+                    }
+
                     
                     var entityFields = [];
                     for(var f in fields){
@@ -106,54 +119,29 @@ function(record, runtime, search, log, dialog, message) {
     function fieldChanged(scriptContext) {
 
         
-        if (scriptContext.fieldId=='leadsource'){
-
-            var currentRecord = scriptContext.currentRecord;
-            var entityId = currentRecord.getValue({fieldId:'entity'});
-            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
-
-
-            if((!!entityId)&&(orderSource==1)){
-            itemsLost = getLostItems(entityId)
-            if (itemsLost.length>0){
-                lostPopup(itemsLost, scriptContext)
-
-            }
-        }
-        }
-
-
-        if(scriptContext.fieldId=='custbody_nbs_source'){
-            var currentRecord = scriptContext.currentRecord;
-            var entityId = currentRecord.getValue({fieldId:'entity'});
-            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
-
-
-            if((!!entityId)&&(orderSource==1)){
-            itemsLost = getLostItems(entityId)
-            if (itemsLost.length>0){
-                lostPopup(itemsLost, scriptContext)
-            }
-
-            }
-
-
-
-        }
-  
    if (scriptContext.fieldId=='entity'){
 
             var currentRecord = scriptContext.currentRecord;
             var entityId = currentRecord.getValue({fieldId:'entity'});
+            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
 
+            if (!!entityId){
 
-
-            if (entityId){
-                    log.debug('entityId',entityId);
-                    
                     itemsPurchased = getPreviousItems(entityId);
+                    if (orderSource==1){
                     itemsLost = getLostItems(entityId);
+                    console.log ('Lost items ' + itemsLost.length + ' ' + !itemsLost)
+                    if (itemsLost.length>0){
+                            var restockMsg = message.create({
+                            title: 'Restock Alert',
+                            message: 'Customer has restock alerts! Click "Restock Alerts" button to view them',
+                            type: message.Type.WARNING,
+                             });
+                            restockMsg.show();
 
+                    }
+
+                    }
 
                 }
         }
@@ -204,6 +192,10 @@ function(record, runtime, search, log, dialog, message) {
             }
             
         }
+
+
+
+
     }
     
     function setSalesOrderFieldsFromCustomer(newRecord){
@@ -452,7 +444,7 @@ function(record, runtime, search, log, dialog, message) {
     }
 
 
-        function getPreviousItems(customerId){
+    function getPreviousItems(customerId){
         var itemsPurchased = [];
 
 
@@ -597,7 +589,11 @@ function(record, runtime, search, log, dialog, message) {
     }
 
 
-    function lostPopup(itemsLost, scriptContext){
+    function lostPopup(scriptContext){
+
+            var currentRecord = scriptContext.currentRecord;
+
+            if (itemsLost.length>0||!itemsLost){
 
             var popupMessage = 'Your customer previously wished to buy the below item(s) but they were out of stock. Would your customer like to add this to their order today?<br><br><table><tr><th><b>SKU</b></th><th><b>Title</b></th><th><b>Date</b></th><th><b>Price</th></tr>'
 
@@ -626,6 +622,28 @@ function(record, runtime, search, log, dialog, message) {
         }
         function failure(reason) { console.log('Failure: ' + reason) }
         dialog.create(options).then(success).catch(failure);
+    }
+
+    else{
+
+        var popupMessage = 'Customer has no outstanding restock alerts'
+
+                var options = {
+                title: 'No restocks',
+                message: popupMessage,
+                buttons: [
+                    { label: 'OK', value: 1 }
+                ]
+            };
+        
+        
+        function success(result) { 
+
+        }
+        function failure(reason) { console.log('Failure: ' + reason) }
+        dialog.create(options).then(success).catch(failure);
+
+    }
 
     }
 
