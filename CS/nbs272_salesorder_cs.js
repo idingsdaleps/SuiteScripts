@@ -7,9 +7,9 @@
  * 2.0          12 June 2019        NoBlue(BO)      added  CH-78 -> count inventory items
  * 2.1          18 Sept 2020        NoBlue(SDK)     Adding Sublist count
  */
-define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/ui/dialog', 'N/ui/message'],
+define(['N/record', 'N/runtime', 'N/search', 'N/log', 'N/ui/dialog', 'N/ui/message', 'N/currentRecord'],
 
-function(record, runtime, search, log, dialog, message) {
+function(record, runtime, search, log, dialog, message, currentRecord) {
     
     /**
      * Function to be executed after page is initialized.
@@ -27,6 +27,8 @@ function(record, runtime, search, log, dialog, message) {
             setGetAuth(currentRecord);  
             setSalesOrderFieldsFromCustomer(currentRecord);
 
+
+
         
             function setSalesOrderFieldsFromCustomer(newRecord){
                 var fields = {custbody_nbs436_data_protection_flag:'custentity_nbs_dataprotectionflag',
@@ -43,6 +45,17 @@ function(record, runtime, search, log, dialog, message) {
                 if (entityId){
                     log.debug('entityId',entityId);
                     itemsPurchased = getPreviousItems(entityId);
+                    itemsLost = getLostItems(entityId);
+                    if (itemsLost.length>0){
+                            var restockMsg = message.create({
+                            title: 'Restock Alert',
+                            message: 'Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view',
+                            type: message.Type.ERROR,
+                             });
+                            restockMsg.show();
+
+                    }
+
                     
                     var entityFields = [];
                     for(var f in fields){
@@ -106,54 +119,29 @@ function(record, runtime, search, log, dialog, message) {
     function fieldChanged(scriptContext) {
 
         
-        if (scriptContext.fieldId=='leadsource'){
-
-            var currentRecord = scriptContext.currentRecord;
-            var entityId = currentRecord.getValue({fieldId:'entity'});
-            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
-
-
-            if((!!entityId)&&(orderSource==1)){
-            itemsLost = getLostItems(entityId)
-            if (itemsLost.length>0){
-                lostPopup(itemsLost, scriptContext)
-
-            }
-        }
-        }
-
-
-        if(scriptContext.fieldId=='custbody_nbs_source'){
-            var currentRecord = scriptContext.currentRecord;
-            var entityId = currentRecord.getValue({fieldId:'entity'});
-            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
-
-
-            if((!!entityId)&&(orderSource==1)){
-            itemsLost = getLostItems(entityId)
-            if (itemsLost.length>0){
-                lostPopup(itemsLost, scriptContext)
-            }
-
-            }
-
-
-
-        }
-  
    if (scriptContext.fieldId=='entity'){
 
             var currentRecord = scriptContext.currentRecord;
             var entityId = currentRecord.getValue({fieldId:'entity'});
+            var orderSource = currentRecord.getValue({fieldId: 'custbody_nbs_source'});
 
+            if (!!entityId){
 
-
-            if (entityId){
-                    log.debug('entityId',entityId);
-                    
                     itemsPurchased = getPreviousItems(entityId);
+                    if (orderSource==1){
                     itemsLost = getLostItems(entityId);
+                    console.log ('Lost items ' + itemsLost.length + ' ' + !itemsLost)
+                    if (itemsLost.length>0){
+                            var restockMsg = message.create({
+                            title: 'Restock Alert',
+                            message: 'Customer has restock alerts! Click "Restock Alerts" button to view them',
+                            type: message.Type.WARNING,
+                             });
+                            restockMsg.show();
 
+                    }
+
+                    }
 
                 }
         }
@@ -204,6 +192,10 @@ function(record, runtime, search, log, dialog, message) {
             }
             
         }
+
+
+
+
     }
     
     function setSalesOrderFieldsFromCustomer(newRecord){
@@ -452,7 +444,7 @@ function(record, runtime, search, log, dialog, message) {
     }
 
 
-        function getPreviousItems(customerId){
+    function getPreviousItems(customerId){
         var itemsPurchased = [];
 
 
@@ -597,7 +589,11 @@ function(record, runtime, search, log, dialog, message) {
     }
 
 
-    function lostPopup(itemsLost, scriptContext){
+    function lostPopup(scriptContext){
+
+            
+
+            if (itemsLost.length>0||!itemsLost){
 
             var popupMessage = 'Your customer previously wished to buy the below item(s) but they were out of stock. Would your customer like to add this to their order today?<br><br><table><tr><th><b>SKU</b></th><th><b>Title</b></th><th><b>Date</b></th><th><b>Price</th></tr>'
 
@@ -626,29 +622,53 @@ function(record, runtime, search, log, dialog, message) {
         }
         function failure(reason) { console.log('Failure: ' + reason) }
         dialog.create(options).then(success).catch(failure);
+    }
+
+    else{
+
+        var popupMessage = 'Customer has no outstanding restock alerts'
+
+                var options = {
+                title: 'No restocks',
+                message: popupMessage,
+                buttons: [
+                    { label: 'OK', value: 1 }
+                ]
+            };
+        
+        
+        function success(result) { 
+
+        }
+        function failure(reason) { console.log('Failure: ' + reason) }
+        dialog.create(options).then(success).catch(failure);
+
+    }
 
     }
 
     function acceptRestock(restockItems, scriptContext){
-        var currentRecord = scriptContext.currentRecord;
+
+        var soRecord = currentRecord.get()
+        
         for (var i = 0; i < restockItems.length; i++){
             console.log ('Adding item ' + restockItems[i].internalId + ' to line ' + i)
-            currentRecord.insertLine({ 
+            soRecord.insertLine({ 
                 sublistId: 'item', 
                 line: i
                  });
-            currentRecord.setCurrentSublistValue({
+            soRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'item',
                 value: restockItems[i].internalId,
                 fireSlavingSync: true
             });
-            currentRecord.setCurrentSublistValue({
+            soRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'quantity',
                 value: 1
             });
-            currentRecord.setCurrentSublistValue({
+            soRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'custcol_ps_restock_accepted',
                 value: 1
@@ -656,7 +676,7 @@ function(record, runtime, search, log, dialog, message) {
 
 
             try{
-            currentRecord.commitLine({
+            soRecord.commitLine({
                 sublistId:'item'
             })}
             catch (e){console.log(e)}
@@ -667,26 +687,26 @@ function(record, runtime, search, log, dialog, message) {
 
     function rejectRestock(restockItems, scriptContext){
 
+            var soRecord = currentRecord.get()
 
-        var currentRecord = scriptContext.currentRecord;
             for (var i = 0; i < restockItems.length; i++){
             console.log ('Adding item ' + restockItems[i].internalId + ' to line ' + i)
-            currentRecord.insertLine({ 
+            soRecord.insertLine({ 
                 sublistId: 'item', 
                 line: i
                  });
-            currentRecord.setCurrentSublistValue({
+            soRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'item',
                 value: restockItems[i].internalId,
                 fireSlavingSync: true
             });
-            currentRecord.setCurrentSublistValue({
+            soRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'quantity',
                 value: 0
             });
-            currentRecord.setCurrentSublistValue({
+            soRecord.setCurrentSublistValue({
                 sublistId: 'item',
                 fieldId: 'custcol_ps_restock_rejected',
                 value: 1
@@ -694,7 +714,7 @@ function(record, runtime, search, log, dialog, message) {
 
 
             try{
-            currentRecord.commitLine({
+            soRecord.commitLine({
                 sublistId:'item'
             })}
             catch (e){console.log(e)}
