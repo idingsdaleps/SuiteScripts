@@ -26,10 +26,7 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
             var currentRecord = scriptContext.currentRecord;
             setGetAuth(currentRecord);  
             setSalesOrderFieldsFromCustomer(currentRecord);
-
-
-
-        
+       
             function setSalesOrderFieldsFromCustomer(newRecord){
                 var fields = {custbody_nbs436_data_protection_flag:'custentity_nbs_dataprotectionflag',
                               custbody_nbs436_dns_to_thirdparty:'custentity_nbs_donotsendtothirdparty',
@@ -47,13 +44,7 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
                     itemsPurchased = getPreviousItems(entityId);
                     itemsLost = getLostItems(entityId);
                     if (itemsLost.length>0){
-                            var restockMsg = message.create({
-                            title: 'Restock Alert',
-                            message: 'Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view',
-                            type: message.Type.ERROR,
-                             });
-                            restockMsg.show();
-
+                        restockWarning();
                     }
 
                     
@@ -132,12 +123,7 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
                     itemsLost = getLostItems(entityId);
                     console.log ('Lost items ' + itemsLost.length + ' ' + !itemsLost)
                     if (itemsLost.length>0){
-                            var restockMsg = message.create({
-                            title: 'Restock Alert',
-                            message: 'Customer has restock alerts! Click "Restock Alerts" button to view them',
-                            type: message.Type.WARNING,
-                             });
-                            restockMsg.show();
+                        restockWarning();                      
 
                     }
 
@@ -585,6 +571,28 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
         });
         console.log(itemsLost);
         return itemsLost;
+
+    }
+
+
+    function restockWarning(scriptContext){
+
+            var restockMsg = message.create({
+            title: 'Restock Alert',
+            message: 'Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view',
+            type: message.Type.ERROR,
+             });
+            restockMsg.show();
+
+            var soRecord = currentRecord.get()
+            soRecord.setValue({
+                fieldId: 'custbody_ps_restock_alert',
+                value: '<font color=\"red\" size=\"18\">Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view</font>',
+                ignoreFieldChange: true
+            });
+
+
+
 
     }
 
