@@ -42,12 +42,7 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
                 if (entityId){
                     log.debug('entityId',entityId);
                     itemsPurchased = getPreviousItems(entityId);
-                    itemsLost = getLostItems(entityId);
-                    if (itemsLost.length>0){
-                        restockWarning();
-                    }
-
-                    
+                                       
                     var entityFields = [];
                     for(var f in fields){
                         entityFields.push(fields[f]);       
@@ -110,7 +105,7 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
     function fieldChanged(scriptContext) {
 
         
-   if (scriptContext.fieldId=='entity'){
+   if (scriptContext.fieldId=='entity'||scriptContext.fieldId=='custbody_nbs_source'){
 
             var currentRecord = scriptContext.currentRecord;
             var entityId = currentRecord.getValue({fieldId:'entity'});
