@@ -5,6 +5,19 @@
 define(['N/search', 'N/record', 'N/email', 'N/runtime', 'N/https', 'N/file'],
     function(search, record, email, runtime, https, file) {
         function execute(context) {
+
+        function retry(expectedErrors, task, retries=1) {
+             try {
+            return task();
+             } catch (err) {
+            if (retries === 0) throw err;
+            if (expectedErrors.length && !expectedErrors.includes(err.name)) throw err;
+            return retry(expectedErrors, task, --retries);
+             }
+        }
+
+
+
         const jbApiKey = runtime.getCurrentScript().getParameter('custscript_ps_jb_key')  
 
         var jbHeaders ={
@@ -12,12 +25,21 @@ define(['N/search', 'N/record', 'N/email', 'N/runtime', 'N/https', 'N/file'],
         };
 
         var jbUrl = 'https://www.jellybooks.com/discovery/api/excerpts?jb_discovery_api_key=' + jbApiKey
-        log.debug('DOWNLOAD', 'Starting download...')
+        log.audit('DOWNLOAD', 'Starting download...')
 
-        var jbResponse = https.get({
-            url: jbUrl,
-            headers: jbHeaders
-        })
+        var jbResponse
+
+
+        retry(["SSS_REQUEST_TIME_EXCEEDED"], function() {
+
+                jbResponse = https.get({
+                url: jbUrl,
+                headers: jbHeaders
+                })
+
+        });
+
+
 
         log.debug('DOWNLOAD', 'Download Complete, parsing...')
 
@@ -56,24 +78,39 @@ define(['N/search', 'N/record', 'N/email', 'N/runtime', 'N/https', 'N/file'],
         });
 
 
-        console.log("TEST INDEX", )
 
 
-
-/*
         for (var i = 0; i < isbnList.length; i++) {
 
-            log.debug('INDEX OF ' + isbnList[i].isbn, jbExcerpts.excerpts.indexOf(isbnList[i].isbn))
+            var excerptMatch = jbExcerpts.excerpts.find(excerpt => excerpt.isbn13===isbnList[i].isbn)
 
-           if (jbExcerpts.excerpts.indexOf(isbnList[i].isbn)!=-1){        
+            if (!!excerptMatch){
 
-                log.debug('Match found for ISBN ' + isbnList[i].isbn)
+                  log.audit('MATCH','Match found for ISBN ' + isbnList[i].isbn)
+                    try {
+                        record.submitFields({
+                            type: record.Type.INVENTORY_ITEM,
+                            id: isbnList[i].itemId,
+                            values: {
+                                'custitem_ps_jellybooks_url': excerptMatch.url
+                            }
+
+                        })
+                    log.audit('UPDATED', 'Updated product ' + isbnList[i].itemId + ' with URL ' + excerptMatch.url)
+                    } catch (e) {
+                        log.error({
+                            title: e.name,
+                            details: e.message      
+                        });
+                     }
 
             }
 
         }
         
-*/
+
+        log.audit("COMPLETE")
+
     }
 
 
