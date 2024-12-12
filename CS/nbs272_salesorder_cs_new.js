@@ -41,7 +41,9 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
 
                 if (entityId){
                     log.debug('entityId',entityId);
+
                     itemsPurchased = getPreviousItems(entityId);
+                    
                                        
                     var entityFields = [];
                     for(var f in fields){
@@ -417,6 +419,9 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
             filters: filters,
             columns: columns
         });
+
+
+
         salesorderSearchObj.run().each(function(result){
             salesOrders.push({documentNumber:result.getValue(columns[0]), date:result.getValue(columns[1])});
             return true;
@@ -467,12 +472,21 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
            filters: filters,
            columns: columns
           });
+
+        var searchResultCount = salesorderSearchObj.runPaged().count;
+        console.log(searchResultCount + ' previous items')
         
+        if (searchResultCount<4000){
+
         salesorderSearchObj.run().each(function(result){
             itemsPurchased.push({itemId:result.getValue(columns[0]), quantity:result.getValue(columns[1]), date:result.getValue(columns[2])});
             return true;
         });
         return itemsPurchased;
+
+        }else{
+            console.log('Too many previous items, skipping...')
+        }
     }
 
 
@@ -574,7 +588,7 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
 
             var restockMsg = message.create({
             title: 'Restock Alert',
-            message: 'Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view',
+            message: 'Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs_new\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs_new\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view',
             type: message.Type.ERROR,
              });
             restockMsg.show();
@@ -582,7 +596,7 @@ function(record, runtime, search, log, dialog, message, currentRecord) {
             var soRecord = currentRecord.get()
             soRecord.setValue({
                 fieldId: 'custbody_ps_restock_alert',
-                value: '<font color=\"red\" size=\"18\">Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view</font>',
+                value: '<font color=\"red\" size=\"18\">Customer has restock alert(s)! Click <a href=# onclick=\"var rConfig = JSON.parse(\'{}\'); rConfig[\'context\'] = \'\/SuiteScripts\/nbs272_salesorder_cs_new\'; var entryPointRequire = require.config(rConfig); entryPointRequire([\'\/SuiteScripts\/nbs272_salesorder_cs_new\'], function(custommodule){ custommodule.lostPopup(); }); return false;\">here</a> to view</font>',
                 ignoreFieldChange: true
             });
 
