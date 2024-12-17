@@ -61,12 +61,13 @@ define(['N/search', 'N/runtime', 'N/record', 'N/https'],
                     salesOrder["delivery_postcode"] = salesOrderRowDetails.shipzip;
                     salesOrder["delivery_country"] = salesOrderRowDetails.shipcountry.text;
                     salesOrder["delivery_phone"] = salesOrderRowDetails.shipphone;
-                    salesOrder["delivery_method"] = salesOrderRowDetails.shipmethod.text;              
+                    salesOrder["delivery_method"] = salesOrderRowDetails.shipmethod.text.replace("Z-Hermes - ","");              
                     salesOrder["payment_method"] = salesOrderRowDetails.paymentmethod.text; 
                     salesOrder["delivery_total"] = salesOrderRowDetails.shippingamount; 
                     salesOrder["grand_total"] = salesOrderRowDetails.total; 
                     salesOrder["subtotal"] = (salesOrderRowDetails.total - salesOrderRowDetails.shippingamount).toFixed(2); 
                     salesOrder["email"] = salesOrderRowDetails.custbody_nbs272_entity_email;
+                    salesOrder["source"] = salesOrderRowDetails.custbody_nbs_source.text.toLowerCase();
                     salesOrder["items"] = [];
                 }
                 const product = _extractProductDetails(salesOrderRowDetails);
@@ -91,9 +92,9 @@ define(['N/search', 'N/runtime', 'N/record', 'N/https'],
             const SENDGRID_KEY = runtime.getCurrentScript().getParameter('custscript_ps_conf_key');
             var CUSTOMER_EMAIL = salesOrderDetails.email;
  
-            log.audit("EMAIL", "Sending email to " + CUSTOMER_EMAIL)
+            log.audit("SalesOrdersEmailConf.sendEmail", "Sending email to " + CUSTOMER_EMAIL)
 
-            var request_body = {"from":{"email":"help@psbooks.co.uk"},"personalizations":[{"to":[{"email":"confirmationtest@psbooks.co.uk"}],"dynamic_template_data":salesOrderDetails}],"template_id":SENDGRID_TEMPLATE, "mail_settings": {"sandbox_mode": {"enable": false}}, "asm": {"group_id": 151077}};
+            var request_body = {"from":{"email":"help@psbooks.co.uk"},"personalizations":[{"to":[{"email":CUSTOMER_EMAIL}],"dynamic_template_data":salesOrderDetails}],"template_id":SENDGRID_TEMPLATE, "mail_settings": {"sandbox_mode": {"enable": false}}, "asm": {"group_id": 151077}};
 
 
             var headerObj = {
