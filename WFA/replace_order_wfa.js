@@ -68,89 +68,12 @@ try {
     });
 
 
-    //Remove MWP and discounts
+    //Process order lines
 
-
-   var mwpLine
-    do{
-    var mwpLine = replacementOrderRecord.findSublistLineWithValue({
-    sublistId: 'item',
-    fieldId: 'item',
-    value: 27062})
-
-        if (mwpLine==-1){
-            log.audit("No MWP lines remaining")
-        }
-        else {
-
-            log.audit("MWP found on line " + mwpLine + ", removing")
-            replacementOrderRecord.removeLine({
-                sublistId: 'item',
-                line: mwpLine,
-                ignoreRecalc: true
-            })
-        }
-
-    
-    }while (mwpLine!=-1)
-
-   var discountLine
-    do{
-    var discountLine = replacementOrderRecord.findSublistLineWithValue({
-    sublistId: 'item',
-    fieldId: 'item',
-    value: 240932})
-
-        if (discountLine==-1){
-            log.audit("No discount lines remaining")
-        }
-        else {
-
-            log.audit("Discount found on line " + discountLine + ", removing")
-            replacementOrderRecord.removeLine({
-                sublistId: 'item',
-                line: discountLine,
-                ignoreRecalc: true
-            })
-        }
-
-    
-    }while (discountLine!=-1)
-
-
-    var staffDiscountLine
-    do{
-    var staffDiscountLine = replacementOrderRecord.findSublistLineWithValue({
-    sublistId: 'item',
-    fieldId: 'item',
-    value: 324554})
-
-        if (staffDiscountLine==-1){
-            log.audit("No staff discount lines remaining")
-        }
-        else {
-
-            log.audit("Staff discount found on line " + discountLine + ", removing")
-            replacementOrderRecord.removeLine({
-                sublistId: 'item',
-                line: staffDiscountLine,
-                ignoreRecalc: true
-            })
-        }
-
-    
-    }while (staffDiscountLine!=-1)
-
-
-
-    //Count remaining lines and iterate through them
-
-    var itemcountsWithoutMWP = replacementOrderRecord.getLineCount({
-                    sublistId: 'item'});
 
     var itemsOOS = '';
 
-    for (var i = 0; i < itemcountsWithoutMWP; i++) {
+    for (var i = 0; i < itemcounts; i++) {
         var lineNum = replacementOrderRecord.selectLine({
             sublistId: 'item',
             line: i
@@ -165,6 +88,23 @@ try {
             fieldId: 'item',
             line: i
         })
+
+    
+    //Remove discount and MWP lines
+
+        if (lineItemId == 27062 || lineItemId == 240932 || lineItemId == 324554){
+
+            log.audit("Removing invalid item")
+            
+            replacementOrderRecord.removeLine({
+                sublistId: 'item',
+                line: i,
+                ignoreRecalc: true
+            })
+
+            i--;
+            itemcounts--;
+        } else {
 
     //Check stock level
 
@@ -204,7 +144,7 @@ try {
             })
 
             i--;
-            itemcountsWithoutMWP--;
+            itemcounts--;
 
         }
 
@@ -252,6 +192,8 @@ try {
             ignoreFieldChange: true
         });
 
+            
+
 
     //Commit the line
 
@@ -261,7 +203,7 @@ try {
                 sublistId: 'item',
                 line: i
             });
-        
+        }
     }
 
 
@@ -303,38 +245,16 @@ try {
 
     //Link the original order to the replacement
 
-    log.audit("Updating original order " + typeof(ORDER_ID))
+    log.audit("Setting replacement ID on original order" )
 
-    try{
+    record.submitFields({
+                type: record.Type.SALES_ORDER,
+                id: ORDER_ID,
+                values: {
+                    'custbody_ps_replacement_order_id': copiedRecord
+                }})
 
-   log.audit("Opening original SO for editing")
-
-    var salesorderRecord = record.load({
-    type: record.Type.SALES_ORDER, 
-    id: ORDER_ID,
-    isDynamic: true,
-    });
-
-
-    log.audit("Sales order " + ORDER_ID + " opened")
-
-    salesorderRecord.setValue({
-    fieldId: 'custbody_ps_replacement_order_id',
-    value: copiedRecord
-    });
-
-    salesorderRecord.save();
-
-    
-
-    }catch (e) {
-        log.error({
-            title: e.name,
-            details: e     
-        });
-     }
-
-    
+        
     log.audit("Replacement order ID field populated, replacement complete")
 
 
