@@ -23,6 +23,8 @@ define(['N/search', 'N/runtime', 'N/record', 'N/https'],
             if(_sendSalesOrderConfEmail(salesOrderDetails)){
                 log.audit('SalesOrdersEmailConf.reduce', `Updating SalesOrder ${salesOrderDetails.order_number} as Sent.`);
                 const salesOrderId = context.key;
+                
+
                 record.submitFields({
                 type: record.Type.SALES_ORDER,
                 id: salesOrderId,
@@ -39,6 +41,9 @@ define(['N/search', 'N/runtime', 'N/record', 'N/https'],
         }
         
         const _extractSalesOrder = (rawSalesOrderRows) => {
+
+            try{
+
             const salesOrder = {};
             rawSalesOrderRows.forEach(row => {
                 const rowJson = JSON.parse(row),
@@ -62,40 +67,78 @@ define(['N/search', 'N/runtime', 'N/record', 'N/https'],
                     salesOrder["delivery_country"] = salesOrderRowDetails.shipcountry.text;
                     salesOrder["delivery_phone"] = salesOrderRowDetails.shipphone;
                     salesOrder["delivery_method"] = salesOrderRowDetails.shipmethod.text.replace("Z-Hermes - ","");              
-                    salesOrder["payment_method"] = salesOrderRowDetails.paymentmethod.text; 
+                    salesOrder["payment_method"] = salesOrderRowDetails.formulatext; 
                     salesOrder["delivery_total"] = salesOrderRowDetails.shippingamount; 
                     salesOrder["grand_total"] = salesOrderRowDetails.total; 
                     salesOrder["subtotal"] = (salesOrderRowDetails.total - salesOrderRowDetails.shippingamount).toFixed(2); 
                     salesOrder["email"] = salesOrderRowDetails.custbody_nbs272_entity_email;
                     salesOrder["source"] = salesOrderRowDetails.custbody_nbs_source.text.toLowerCase();
+                    if (salesOrderRowDetails.custbody_nbs_newbalance < 0){
+                        salesOrder["newbalance"] = salesOrderRowDetails.custbody_nbs_newbalance;
+                    }
                     salesOrder["items"] = [];
+                    salesOrder["lostItems"] = [];
                 }
+                
+            if (salesOrderRowDetails.amount>0){
                 const product = _extractProductDetails(salesOrderRowDetails);
                 salesOrder["items"].push(product);
+                }
+
+            if (salesOrderRowDetails.custcol_nbs_quantitylost>0){
+                const product = _extractLostProductDetails(salesOrderRowDetails);
+                salesOrder["lostItems"].push(product);
+                }
+
             })
-            return salesOrder;
+            return salesOrder;} catch(e) {log.error("ERROR", e.message)}
         }
         
         const _extractProductDetails = (salesOrderRowDetails) => {
 
+         
                 return {
                 "sku": salesOrderRowDetails['externalid.item'].value,
                 "name": salesOrderRowDetails['displayname.item'],
                 "price": salesOrderRowDetails['amount'],
-                "qty": salesOrderRowDetails['quantity']
-            }
-        }
+                "qty": salesOrderRowDetails['quantity'],
+                } 
         
+
+        }
+
+        const _extractLostProductDetails = (salesOrderRowDetails) => {
+
+         
+                return {
+                "sku": salesOrderRowDetails['externalid.item'].value,
+                "name": salesOrderRowDetails['displayname.item'],
+                } 
+        
+
+        }
+
         const _sendSalesOrderConfEmail = (salesOrderDetails) => {
-            const SENDGRID_TEMPLATE = runtime.getCurrentScript().getParameter('custscript_ps_conf_template');
+             const SENDGRID_TEMPLATE = runtime.getCurrentScript().getParameter('custscript_ps_conf_template');
             const SENDGRID_URL = runtime.getCurrentScript().getParameter('custscript_ps_conf_url');
             const SENDGRID_KEY = runtime.getCurrentScript().getParameter('custscript_ps_conf_key');
-            var CUSTOMER_EMAIL = salesOrderDetails.email;
+            const LIVE_MODE = runtime.getCurrentScript().getParameter('custscript_ps_conf_livemode');
+            const TEST_EMAIL = runtime.getCurrentScript().getParameter('custscript_ps_conf_testemail');
+            
+            if(LIVE_MODE == true){
+                var CUSTOMER_EMAIL = salesOrderDetails.email;
+                } else{
+                    log.debug('NOT in Live Mode, using ' + TEST_EMAIL)
+                var CUSTOMER_EMAIL = TEST_EMAIL;
+            }
+
+            
  
             log.audit("SalesOrdersEmailConf.sendEmail", "Sending email to " + CUSTOMER_EMAIL)
 
             var request_body = {"from":{"email":"help@psbooks.co.uk"},"personalizations":[{"to":[{"email":CUSTOMER_EMAIL}],"dynamic_template_data":salesOrderDetails}],"template_id":SENDGRID_TEMPLATE, "mail_settings": {"sandbox_mode": {"enable": false}}, "asm": {"group_id": 151077}};
 
+            log.debug("SalesOrdersEmailConf.sendEmail", request_body)
 
             var headerObj = {
                 "content-type": "application/json",
@@ -114,7 +157,7 @@ define(['N/search', 'N/runtime', 'N/record', 'N/https'],
                 log.error('SalesOrdersEmailConf.postSalesOrder', `Could not Post ${salesOrderDetails.order_number} to Sendgrid.
                     Reason: ${JSON.stringify(responseBody)}`)
                 return false;
-            }
+            } 
             return true;
         }
         
