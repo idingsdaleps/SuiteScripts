@@ -5,26 +5,26 @@ import sys
 import glob
 import time
 import os
+import params
 
-CONSUMER_KEY = ""
-CONSUMER_SECRET = ""
-TOKEN_ID = ""
-TOKEN_SECRET = ""
+
 REALM = "4480225"
 RESTLET_URL = "https://4480225.restlets.api.netsuite.com/app/site/hosting/restlet.nl?script=2993&deploy=1&sku="
-SCALE_FACTOR = 1.249
+SCALE_FACTOR = 1.668
 BACKGROUND_IMAGE = "background.jpg"
 BACKGROUND_HEIGHT = 800
 BACKGROUND_WIDTH = 1200
-SHELF_POSITION = 42
-CENTRE_POSITION = 570
-TIME_WINDOW = 10
+SHELF_POSITION = 173
+CENTRE_POSITION = 550
+TIME_WINDOW = 100
+MAX_HEIGHT = 620
+MAX_WIDTH = 475
 
 auth = OAuth1(
-    client_key=CONSUMER_KEY,
-    client_secret=CONSUMER_SECRET,
-    resource_owner_key=TOKEN_ID,
-    resource_owner_secret=TOKEN_SECRET,
+    client_key=params.CONSUMER_KEY,
+    client_secret=params.CONSUMER_SECRET,
+    resource_owner_key=params.TOKEN_ID,
+    resource_owner_secret=params.TOKEN_SECRET,
     realm=REALM,
     signature_method="HMAC-SHA256",
 )
@@ -58,12 +58,15 @@ def processImage(SKU, newPath):
     newCoverHeight = PRODUCT_HEIGHT_PX
     print("New Width " + str(newCoverWidth))
     print("New Height " + str(newCoverHeight))
-    coverScaledSize = (newCoverWidth, newCoverHeight)
-    coverScaled = coverImage.resize(coverScaledSize)
-    topPosition = BACKGROUND_HEIGHT-SHELF_POSITION-PRODUCT_HEIGHT_PX
-    leftPosition = CENTRE_POSITION-round(newCoverWidth/2)
-    backgroundImage.paste(coverScaled,(leftPosition,topPosition))
-    backgroundImage.save("output/" + newPath, quality=95)
+    if (newCoverWidth<MAX_WIDTH) and (newCoverHeight<MAX_HEIGHT):
+        coverScaledSize = (newCoverWidth, newCoverHeight)
+        coverScaled = coverImage.resize(coverScaledSize)
+        topPosition = BACKGROUND_HEIGHT-SHELF_POSITION-PRODUCT_HEIGHT_PX
+        leftPosition = CENTRE_POSITION-round(newCoverWidth/2)
+        backgroundImage.paste(coverScaled,(leftPosition,topPosition))
+        backgroundImage.save("output/" + newPath, quality=95)
+    else:
+        print("Image too large, skipping")
     
 
 
